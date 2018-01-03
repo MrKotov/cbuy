@@ -11,8 +11,13 @@ const logger = new (winston.Logger)({
 const credentials = JSON.parse(fs.readFileSync('./cassandra/creds.json').toString())
 const options = JSON.parse(fs.readFileSync('./cassandra/cassandra_options.json').toString())
 
-client.init(credentials, options)
-
+try {
+  client.init(credentials, options)
+  logger.info('DB connection initialized successfully!')
+} catch (e) {
+  logger.error(e)
+  process.exit(1)
+}
 const headers = {
   'Content-Type': 'application/json'
 }
