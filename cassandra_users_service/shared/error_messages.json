@@ -1,0 +1,6 @@
+{
+    "500": "Query runtime error!",
+    "501": "Initialization error!",
+    "502": "Client not initialized!",
+    "504": "Invalid parameters!"
+}
