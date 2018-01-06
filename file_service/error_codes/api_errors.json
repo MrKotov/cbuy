@@ -1,0 +1,15 @@
+{
+    "404": "Invalid route requested!",
+    "500": "Internal Server Error!",
+    "501": "Invalid files size!",
+    "502": "Unsupported file type!",
+    "503": "Error while deleting local file!",
+    "504": "MIME type validation error!",
+    "505": "Failed to retrieve the image!",
+    "601": "Google Vision API error!",
+    "602": "Google Translation API error!",
+    "603": "Google Storage API error!",
+    "604": "Google Vision could not fetch tags for this image!",
+    "701": "Cassandra INSERT error!",
+    "702": "Cassandra DELETE error!"
+}

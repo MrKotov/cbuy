@@ -1,0 +1,6 @@
+{   "501": "The client is not initialized!",
+    "502": "Initialization error!",
+    "503": "Invalid parameters error!",
+    "504": "Client already initialized!",
+    "505": "Invalid Client type error!"
+}

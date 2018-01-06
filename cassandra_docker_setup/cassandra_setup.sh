@@ -40,7 +40,8 @@ CREATE_USER_CONTENT_KEYSPACE="CREATE KEYSPACE user_content
 CREATE_IMAGE_TABLE="CREATE TABLE user_content.images (
     useruuid uuid,
     id uuid,
-    content blob,
+    src text,
+    name text,
     tags set<text>,
     PRIMARY KEY (useruuid, id)
 ) WITH CLUSTERING ORDER BY (id ASC);"

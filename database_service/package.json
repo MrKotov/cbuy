@@ -1,0 +1,19 @@
+{
+  "name": "database_service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "standard": "standard",
+    "standard:fix": "standard --fix"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cassandra-driver": "^3.3.0",
+    "winston": "^2.4.0"
+  },
+  "devDependencies": {
+    "standard": "^10.0.3"
+  }
+}

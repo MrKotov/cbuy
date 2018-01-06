@@ -1,0 +1,21 @@
+{
+  "name": "file_service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "standard": "standard",
+    "standard:fix": "standard --fix"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/storage": "^1.5.2",
+    "winston": "^2.4.0",
+    "formidable": "^1.1.1",
+    "mime": "^2.0.3"
+  },
+  "devDependencies": {
+    "standard": "^10.0.3"
+  }
+}

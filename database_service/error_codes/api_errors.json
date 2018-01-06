@@ -1,0 +1,15 @@
+{
+    "404": "Non existing path!",
+    "405": "User not found!",
+    "500": "Internal Server Error!",
+    "501": "Query error!",
+    "502": "Initialization error!",
+    "503": "Client not initialized!",
+    "504": "Invalid parameters!",
+    "601": "GET method query cannot be empty!",
+    "602": "Invalid UUID length!",
+    "603": "Invalid credentials!",
+    "604": "Password comparison error!",
+    "605": "Password mismatch!",
+    "606": "Password hashing error!"
+}
