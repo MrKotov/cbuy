@@ -4,53 +4,52 @@ const fs = require('fs')
 let userClient
 let contentClient
 
-const errorMessages = fs.readFileSync('./cassandra/client_errors.json')
+const errorMessages = JSON.parse(fs.readFileSync('./cassandra/client_errors.json').toString())
 
 module.exports = {
   init: (clientType, credentials, options) => {
-    let client
     switch (clientType) {
       case 'user': {
-        init(userClient, credentials, options)
-        break;
+        userClient = init(credentials, options)
+        break
       }
       case 'content': {
-        init(contentClient, credentials, options)
+        contentClient = init(credentials, options)
         break
       }
       default: {
         throw new Error(errorMessages['503'])
       }
     }
-
   },
   getUser: (email, password, callback) => getUser(email, password, callback),
   insertUser: (email, password, firstname, lastname, callback) => insertUser(email, password, firstname, lastname, callback),
   deleteUser: (useruuid, callback) => deleteUser(useruuid, callback),
   insertImage: (useruuid, image, callback) => insertImage(useruuid, image, callback),
-  getImages: (userUID, callback) => getImages(userUID, callback),
-  deleteImage: (useruuid, imageId, callback) => deleteImage(useruuid, imageId, callback),
+  getImages: (useruuid, callback) => getImages(useruuid, callback),
+  deleteImage: (useruuid, imageuuid, callback) => deleteImage(useruuid, imageuuid, callback),
   insertSavedSearchItem: (imageuuid, olxOffer, callback) => insertSearchItem(imageuuid, olxOffer, callback),
   getSavedSearchItems: (imageuuid, callback) => getSavedSearchItems(imageuuid, callback),
   deleteSavedSearchItem: (imageuuid, offeruuid, callback) => deleteSavedSearchItem(imageuuid, offeruuid, callback),
   close: (client) => close(client)
 }
 
-function init(client, credentials, options) {
+function init (credentials, options) {
+  let client
   try {
     if (client) {
       throw new Error(errorMessages['504'])
     } else {
       const auth = new cassandra.auth.PlainTextAuthProvider(credentials.username, credentials.password)
       options.authProvider = auth
-      client = new cassandra.Client(options)
+      return new cassandra.Client(options)
     }
   } catch (e) {
     throw new Error('Error while initializing cassandra client: %s', e)
   }
 }
 
-function close(client) {
+function close (client) {
   if (client) {
     client.shutdown()
   } else {
@@ -58,8 +57,8 @@ function close(client) {
   }
 }
 
-function getUser(email, password, callback) {
-  if (!client) {
+function getUser (email, password, callback) {
+  if (!userClient) {
     return callback(errorMessages['502'])
   }
   const query = 'SELECT id, email, password, firstname, lastname FROM app_users WHERE email = ? allow filtering;'
@@ -83,8 +82,8 @@ function getUser(email, password, callback) {
   })
 }
 
-function insertUser(email, password, firstname, lastname, callback) {
-  if (!client) {
+function insertUser (email, password, firstname, lastname, callback) {
+  if (!userClient) {
     return callback(errorMessages['502'])
   } else if (!email || !password || !firstname || !lastname) {
     return callback(errorMessages['503'])
@@ -100,8 +99,8 @@ function insertUser(email, password, firstname, lastname, callback) {
   })
 }
 
-function deleteUser(useruuid, callback) {
-  if (!client) {
+function deleteUser (useruuid, callback) {
+  if (!userClient) {
     return callback(errorMessages['502'])
   }
   const query = 'DELETE FROM app_users WHERE id = ?;'
@@ -115,13 +114,13 @@ function deleteUser(useruuid, callback) {
   })
 }
 
-function insertImage(useruuid, image, callback) {
-  if (!client) {
+function insertImage (useruuid, image, callback) {
+  if (!contentClient) {
     return callback(errorMessages['502'])
   } else if (!image || !image.src || !image.name || !image.tags || !useruuid) {
     return callback(errorMessages['503'])
   }
-  const query = 'INSERT INTO images(id, useruuid, name, src, tags) VALUES(?, ?, ?, ?);'
+  const query = 'INSERT INTO images(id, useruuid, name, src, tags) VALUES(?, ?, ?, ?, ?);'
 
   contentClient.execute(query, [uuid.random(), useruuid, image.src, image.name, image.tags], { prepare: true }, (err, res) => {
     if (err) {
@@ -132,8 +131,8 @@ function insertImage(useruuid, image, callback) {
   })
 }
 
-function getImages(useruuid, callback) {
-  if (!client) {
+function getImages (useruuid, callback) {
+  if (!contentClient) {
     return callback(errorMessages['502'])
   } else if (!useruuid) {
     return callback(errorMessages['503'])
@@ -152,10 +151,10 @@ function getImages(useruuid, callback) {
   })
 }
 
-function deleteImage(useruuid, imageuuid, callback) {
-  if (!client) {
+function deleteImage (useruuid, imageuuid, callback) {
+  if (!contentClient) {
     return callback(errorMessages['502'])
-  } else if (!useruuid || imageuuid) {
+  } else if (!useruuid || !imageuuid) {
     return callback(errorMessages['503'])
   }
   const queries = [
@@ -168,17 +167,23 @@ function deleteImage(useruuid, imageuuid, callback) {
       params: [useruuid, imageuuid]
     }
   ]
-  contentClient.batch(queries, { prepare: true }, (err, res) => {
+  contentClient.execute(queries[0].query, queries[0].params, { prepare: true }, (err, res) => {
     if (err) {
       callback(err)
     } else {
-      callback(null)
+      contentClient.execute(queries[1].query, queries[1].params, { prepare: true }, (err, res) => {
+        if (err) {
+          callback(err)
+        } else {
+          callback(null)
+        }
+      })
     }
   })
 }
 
-function insertSearchItem(imageuuid, olxOffer, callback) {
-  if (!client) {
+function insertSearchItem (imageuuid, olxOffer, callback) {
+  if (!contentClient) {
     return callback(errorMessages['503'])
   } else if (!olxOffer || olxOffer.href) {
     return callback(errorMessages['503'])
@@ -195,8 +200,8 @@ function insertSearchItem(imageuuid, olxOffer, callback) {
     })
 }
 
-function getSavedSearchItems(imageuuid, callback) {
-  if (!client) {
+function getSavedSearchItems (imageuuid, callback) {
+  if (!contentClient) {
     return callback(errorMessages['502'])
   }
   const query = 'SELECT id, olxSrc, olxAlt, olxHref, olxPrice FROM saved_searches WHERE imageuuid = ?;'
@@ -210,8 +215,8 @@ function getSavedSearchItems(imageuuid, callback) {
     })
 }
 
-function deleteSavedSearchItem(imageuuid, offeruuid, callback) {
-  if (!client) {
+function deleteSavedSearchItem (imageuuid, offeruuid, callback) {
+  if (!contentClient) {
     return callback(errorMessages['502'])
   } else if (!offeruuid) {
     return callback(errorMessages['503'])

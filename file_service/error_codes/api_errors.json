@@ -6,10 +6,12 @@
     "503": "Error while deleting local file!",
     "504": "MIME type validation error!",
     "505": "Failed to retrieve the image!",
+    "506": "Invalid request parameters!",
     "601": "Google Vision API error!",
     "602": "Google Translation API error!",
     "603": "Google Storage API error!",
     "604": "Google Vision could not fetch tags for this image!",
+    "605": "Image exists!",
     "701": "Cassandra INSERT error!",
     "702": "Cassandra DELETE error!"
 }

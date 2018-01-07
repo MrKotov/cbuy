@@ -9,11 +9,11 @@ const logger = new (winston.Logger)({
     new (winston.transports.Console)({ colorized: true })]
 })
 
-const errors = fs.readFileSync('./error_codes/api_errors.json').toJSON();
-const userCredentials = fs.readFileSync('./cassandra/user_creds.json').toJSON()
-const userOptions = fs.readFileSync('./cassandra/user_options.json').toJSON()
-const contentCredentials = fs.readFileSync('./cassandra/user_content_creds.json').toJSON()
-const contentOptions = fs.readFileSync('./cassandra/user_content_options.json').toJSON()
+const errors = JSON.parse(fs.readFileSync('./error_codes/api_errors.json').toString())
+const userCredentials = JSON.parse(fs.readFileSync('./credentials/user_creds.json').toString())
+const userOptions = JSON.parse(fs.readFileSync('./credentials/user_options.json').toString())
+const contentCredentials = JSON.parse(fs.readFileSync('./credentials/user_content_creds.json').toString())
+const contentOptions = JSON.parse(fs.readFileSync('./credentials/user_content_options.json').toString())
 
 try {
   client.init('user', userCredentials, userOptions)
@@ -27,19 +27,20 @@ const headers = {
   'Content-Type': 'application/json'
 }
 
-function writeError(res, errorCode, details) {
+function writeError (res, errorCode, details) {
   logger.debug(errors.errorCode)
+  let erroroMessage = errors[errorCode + '']
   res.writeHead(errorCode, headers)
   res.write(JSON.stringify({
     errorMessage: {
-      general: errors.errorCode,
+      general: erroroMessage,
       detailed: details || ''
     }
   }))
   res.end()
 }
 
-function writeSuccess(res, result) {
+function writeSuccess (res, result) {
   res.writeHead(200, headers)
   res.write(JSON.stringify({
     message: 'success',
@@ -48,11 +49,19 @@ function writeSuccess(res, result) {
   res.end()
 }
 
+function getValidQuery (urlParts) {
+  let query = urlParts.query
+  if (query.uuid && (query.uuid.length !== 36 || !query.uuid | Object.keys(query).length === 0)) {
+    return ''
+  } else {
+    return query
+  }
+}
+
 process.on('uncaughtException', error => {
   logger.error(error)
   process.exit(1)
 })
-
 
 let body
 let jsonBody
@@ -60,15 +69,12 @@ let jsonBody
 module.exports = (req, res) => {
   let urlParts = url.parse(req.url, true)
   if (req.method === 'GET') {
-    let query = urlParts.query
-    if (Object.keys(query).length === 0) {
-      return writeError(res, 604)
-    }
-    if (query.uuid.length !== 36) {
-      return writeError(res, 602)
-    }
+    let query = getValidQuery(urlParts)
     switch (urlParts.pathname) {
       case '/images': {
+        if (!query) {
+          return writeError(res, 501)
+        }
         let useruuid = query.uuid
         client.getImages(useruuid, (err, result) => {
           if (err) {
@@ -80,6 +86,9 @@ module.exports = (req, res) => {
         break
       }
       case '/searches': {
+        if (!query) {
+          return writeError(res, 501)
+        }
         let imageuuid = query.uuid
         client.getSavedSearchItems(imageuuid, (err, result) => {
           if (err) {
@@ -103,7 +112,7 @@ module.exports = (req, res) => {
       try {
         jsonBody = JSON.parse(body)
         switch (urlParts.pathname) {
-          case '/user': {
+          case '/users': {
             if (!utils.validateEmail(jsonBody.email) && !jsonBody.password) {
               return writeError(res, 603)
             }
@@ -155,7 +164,7 @@ module.exports = (req, res) => {
             })
             break
           }
-          case '/image': {
+          case '/images': {
             client.insertImage(jsonBody.useruuid, jsonBody.image, (err, result) => {
               if (err) {
                 writeError(res, 501, err)
@@ -165,7 +174,7 @@ module.exports = (req, res) => {
             })
             break
           }
-          case '/search': {
+          case '/searches': {
             client.insertSavedSearchItem(jsonBody.imageuuid, jsonBody.olxOffer, (err, result) => {
               if (err) {
                 writeError(res, 501, err)
@@ -192,7 +201,7 @@ module.exports = (req, res) => {
       try {
         jsonBody = JSON.parse(body)
         switch (urlParts.pathname) {
-          case '/user': {
+          case '/users': {
             client.deleteUser(jsonBody.useruuid, (err, result) => {
               if (err) {
                 writeError(res, 501, err)
@@ -202,7 +211,7 @@ module.exports = (req, res) => {
             })
             break
           }
-          case '/image': {
+          case '/images': {
             client.deleteImage(jsonBody.useruuid, jsonBody.imageuuid, (err, result) => {
               if (err) {
                 writeError(res, 501, err)
@@ -212,7 +221,7 @@ module.exports = (req, res) => {
             })
             break
           }
-          case '/search': {
+          case '/searches': {
             client.deleteSavedSearchItem(jsonBody.imageuuid, jsonBody.offeruuid, (err, result) => {
               if (err) {
                 writeError(res, 501, err)

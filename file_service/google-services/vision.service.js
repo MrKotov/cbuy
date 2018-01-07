@@ -4,6 +4,7 @@ module.exports = {
   getImageTags: function getImageTags (googleApiKey, imageUri, callback) {
     processImage(googleApiKey, imageUri, (err, result) => {
       if (err) {
+        console.log(err)
         callback(err)
       } else {
         let tagsArray = []

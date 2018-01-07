@@ -10,7 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^1.0.3",
     "cassandra-driver": "^3.3.0",
+    "validator": "^9.2.0",
     "winston": "^2.4.0"
   },
   "devDependencies": {

@@ -5,36 +5,39 @@ let configuration
 module.exports = {
   init: (configurationFile) => {
     try {
-      configuration = fs.readFileSync(configurationFile).toJSON()
+      configuration = JSON.parse(fs.readFileSync(configurationFile).toString())
     } catch (e) {
       throw new Error(e)
     }
   },
-  makeRequest: (operation, image, useruuid, callback) => makeRequest(operation, image, useruuid, callback)
+  makeRequest: (operation, useruuid, image, callback) => makeRequest(operation, useruuid, image, callback)
 }
 
-function makeRequest (operation, image, useruuid, callback) {
+function makeRequest (operation, useruuid, image, callback) {
   if (!configuration) {
     let errorMessage = 'Configuration is not initialized.'
     return callback(errorMessage)
   }
 
-  let options
+  let options = configuration
   const requestBody = {
     useruuid: useruuid
   }
 
   switch (operation) {
     case 'insert': {
-      options = configuration
       options.method = 'POST'
       requestBody.image = image
+      options.headers = {}
       break
     }
     case 'delete': {
-      options = configuration
       options.method = 'DELETE'
-      requestBody.imageId = image.imageId
+      requestBody.imageuuid = image.imageuuid
+      options.headers = {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Length': Buffer.byteLength(JSON.stringify(requestBody))
+      }
       break
     }
     default: {
@@ -43,7 +46,7 @@ function makeRequest (operation, image, useruuid, callback) {
     }
   }
 
-  const postRequest = http.request(options, (resp) => {
+  const request = http.request(options, (resp) => {
     let buffer = []
     resp.on('data', (data) => {
       buffer.push(data.toString())
@@ -59,6 +62,9 @@ function makeRequest (operation, image, useruuid, callback) {
       callback(err)
     })
   })
-  postRequest.write(JSON.stringify(requestBody))
-  postRequest.end()
+  request.on('error', (err) => {
+    callback(err)
+  })
+  request.write(JSON.stringify(requestBody))
+  request.end()
 }

@@ -1,5 +1,5 @@
 {
     "host": "localhost",
     "port": "8082",
-    "path": "/image"
+    "path": "/images"
 }

@@ -1,4 +1,5 @@
 const GoogleCloudStorage = require('@google-cloud/storage')
+const utils = require('../utils')
 
 let storage
 const notInitializedMessage = 'Google Clooud Storage not initialized.'
@@ -56,8 +57,7 @@ function uploadImage (useruuid, image, callback) {
   if (!storageIsInitialized()) {
     return callback(notInitializedMessage)
   }
-  const imageNameTokens = image.split('/')
-  const imageName = imageNameTokens[imageNameTokens.length - 1]
+  const imageName = utils.getImageNameFromPath(image)
   const userBucket = storage.bucket(useruuid)
   userBucket.file(imageName).exists((error, exists) => {
     if (error) {
@@ -71,7 +71,7 @@ function uploadImage (useruuid, image, callback) {
         }
       })
     } else {
-      callback(null, { imageUrl: `https://storage.googleapis.com/${useruuid}/${imageName}` })
+      callback(null)
     }
   })
 }

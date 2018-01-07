@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CONTAINER_NAME="cass2"
+CONTAINER_NAME="cass1"
 CONTAINER_PORT="9998"
 CASSANDRA_DB_HOST_VOLUME="/home/kotov/test1"
 CASSANDRA_DOCKER_IMAGE_TAG="latest"
@@ -16,11 +16,13 @@ CREATE KEYSPACE users
    'class' : 'SimpleStrategy', 
    'replication_factor' : 1 
 };"
-CREATE_USERS_TABLE="CREATE TABLE users.app_users ( 
-   email text PRIMARY KEY,
+CREATE_USERS_TABLE="CREATE TABLE users.app_users (
+   id uuid,
+   email text,
    password text,
    firstname text,
-   lastname text);"
+   lastname text,
+   PRIMARY KEY(id));"
 GRANT_MODIFY_APP_USERS_PERMISSIONS_TO_USER_ADMIN="GRANT MODIFY ON users.app_users TO user_admin;"
 GRANT_SELECT_APP_USERS_PERMISSIONS_TO_USER_ADMIN="GRANT SELECT ON users.app_users TO user_admin;"
 USER_ADMIN_NAME="app_user_admin"
@@ -82,7 +84,7 @@ declare -a QUERIES=( "${CREATE_USER_ADMIN_ROLE_NO_LOGIN}"
 "${GRANT_PRIVILEGE_APPLICATION_CONTENT_USER_ADMIN}"
 )
 
-docker run --name ${CONTAINER_NAME} -p 9160:${CONTAINER_PORT} -v ${CASSANDRA_DB_HOST_VOLUME}:/var/lib/cassandra -d cassandra:${CASSANDRA_DOCKER_IMAGE_TAG} 
+docker run --name ${CONTAINER_NAME} -p ${CONTAINER_PORT}:9042 -v ${CASSANDRA_DB_HOST_VOLUME}:/var/lib/cassandra -d cassandra:${CASSANDRA_DOCKER_IMAGE_TAG} 
 
 while [ `docker ps | grep ${CONTAINER_NAME} | wc -l` -eq 0 ]; do 
     sleep 5
