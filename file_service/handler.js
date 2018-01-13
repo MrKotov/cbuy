@@ -103,9 +103,7 @@ module.exports = (req, res) => {
                           if (err) {
                             writeError(res, 602, err)
                           } else {
-                            for (let tag of translatedTags) {
-                              tags.push(tag)
-                            }
+                            tags = translatedTags;
                           }
                           const image = {
                             src: imageSrc,

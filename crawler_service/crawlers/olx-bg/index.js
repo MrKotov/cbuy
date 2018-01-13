@@ -6,7 +6,7 @@ const cheerio = require('cheerio')
 
 module.exports = {
 
-  olxQueryComposer: function (searchQuery, searchInDescription, searchWithPhotosOnly, searchWithCourierOnly, nextPageToken) {
+  olxQueryComposer: function (searchQuery, nextPageToken, searchInDescription, searchWithPhotosOnly, searchWithCourierOnly) {
     if (!searchQuery) {
       return undefined
     }
@@ -14,7 +14,9 @@ module.exports = {
     let queryString = 'q-'
     let encodedSearchQuery = encodeURIComponent(searchQuery.replace(' ', '-')) + '/?'
     queryString += encodedSearchQuery
-
+    if (nextPageToken) {
+      queryString += '&page=' + nextPageToken
+    }
     if (searchInDescription) {
       queryString += '&search[description]=1'
     }
@@ -24,10 +26,7 @@ module.exports = {
     if (searchWithCourierOnly) {
       queryString += '&search[courier]=1'
     }
-    if (nextPageToken) {
-      queryString += '&page=' + nextPageToken
-    }
-
+    
     return Object.freeze(queryString)
   },
 
@@ -102,7 +101,7 @@ function processOlxRequest (htmlContent, callback) {
     const offerPricesArray = $('p.price')
     const offerPrevNextPage = $('a.pageNextPrev')
     const offersDisplayedPages = $('a.block.br3.brc8.large.tdnone.lheight24')
-    const offersLastPage = offersDisplayedPages[offersDisplayedPages.length - 1].children[1].children[0].data || 0
+    const offersLastPage = offersDisplayedPages.length === 0 ? 1 : offersDisplayedPages[offersDisplayedPages.length - 1].children[1].children[0].data || 0
     let offerNextPage = ''
     if (offerPrevNextPage.length === 2) {
       offerNextPage = offerPrevNextPage[1].attribs.href.split('page=')[1]
