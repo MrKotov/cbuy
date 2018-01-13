@@ -1,0 +1,35 @@
+input.ng-invalid.ng-touched {
+    border: 1px solid red
+}
+    
+input.ng-valid.ng-touched {
+    border: 1px solid green
+}
+
+.top-buffer { margin-top:10%; }
+
+.col-centered{
+    float: none;
+    margin: 0 auto;
+}
+
+.profile-img {
+	width: 96px;
+	height: 96px;
+	margin: 0 auto 10px;
+	display: block;
+	-moz-border-radius: 50%;
+	-webkit-border-radius: 50%;
+	border-radius: 50%;
+}
+.navbar-nav {
+    display:table;
+    width:100%;
+    margin: 0;
+}
+.navbar-nav > li {
+    float:none;
+    display:table-cell;
+    text-align:center;
+}
+  

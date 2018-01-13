@@ -1,0 +1,33 @@
+<div id="gallery" class="container">
+    <div class="row">
+        <form [formGroup]="uploadForm">
+            <div class="col-md-4 col-sm-4 col-xs-6 image-upload">
+                <label for="fileInput">
+                    <div class="thumbnail">
+                        <img src="https://f.vimeocdn.com/images_v6/professionals/icon-upload-vimeo-blue.svg" />
+                    </div>
+                </label>
+                <input id="fileInput" type="file" (change)="onFileChange($event)" #fileInput>
+            </div>
+        </form>
+
+        <div class="col-md-4 col-sm-4 col-xs-6" *ngFor="let pictureObject of userPicturesArray;">
+            <div class="thumbnail">
+                <div class="caption">
+                    <h4>Pciture options</h4>
+                    <p>
+                        Please select one of the following actions:
+                    </p>
+                    <p>
+                        <a (click)='goToNewSearch(pictureObject)' [routerLink]="['../newsearch']" class="label label-success">Search</a>
+                        <a (click)='goToSavedSearches(pictureObject)' [routerLink]="['../savedsearches']" class="label label-primary">Saved Searches</a>
+                        <a href="" class="label label-danger">Delete</a>
+                    </p>
+                </div>
+                <img src="{{pictureObject.src}}" alt="...">
+                <div style="display: none;">{{pictureObject.tags}}</div>
+
+            </div>
+        </div>
+    </div>
+</div>

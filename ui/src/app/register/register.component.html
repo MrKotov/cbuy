@@ -1,0 +1,46 @@
+<form class="col-md-10  col-md-offset-1" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <div class="row"></div>
+    <div class="form-group">
+        <div class="input-group">
+            <span class="input-group-addon">
+                <i class="glyphicon glyphicon-user"></i>
+            </span>
+            <input type="firstName" placeholder="First Name" id="firstName" class="form-control" />
+        </div>
+    </div>
+    <div class="row"></div>
+    <div class="form-group">
+        <div class="input-group">
+            <span class="input-group-addon">
+                <i class="glyphicon glyphicon-user"></i>
+            </span>
+            <input type="lastName" placeholder="Last Name" id="lastName" class="form-control" />
+        </div>
+    </div>
+    <div class="row"></div>
+    <div class="form-group">
+        <div class="input-group">
+            <span class="input-group-addon">
+                <i class="glyphicon glyphicon-user"></i>
+            </span>
+            <input type="text" placeholder="Username" id="username" formControlName="username" class="form-control" />
+        </div>
+        <span *ngIf="!registerForm.get('username').valid && registerForm.get('username').touched" class="help-block">Please a valid username.</span>
+    </div>
+    <div class="row"></div>
+    <div class="form-group">
+        <div class="input-group">
+            <span class="input-group-addon">
+                <i class="glyphicon glyphicon-lock"></i>
+            </span>
+            <input type="password" placeholder="Password" id="password" formControlName="password" class="form-control" />
+        </div>
+    </div>
+    <div class="row"></div>
+    <div class="form-actions">
+        <!-- <button [routerLink]="['/register']" type="button" class="btn btn-primary"> Register
+                        </button> -->
+        <button type="submit" class="btn btn-md btn-primary btn-block">Register</button>
+
+    </div>
+</form>
