@@ -75,7 +75,7 @@ module.exports = (req, res) => {
         if (!query) {
           return writeError(res, 501)
         }
-        let useruuid = query.uuid
+        let useruuid = query.useruuid
         client.getImages(useruuid, (err, result) => {
           if (err) {
             writeError(res, 501, err)

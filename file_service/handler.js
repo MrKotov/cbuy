@@ -34,7 +34,7 @@ const headers = {
   'Content-Type': 'application/json'
 }
 
-function writeError (res, errorCode, details) {
+function writeError(res, errorCode, details) {
   logger.debug(errors.errorCode)
   res.writeHead(errorCode, headers)
   res.write(JSON.stringify({
@@ -46,7 +46,7 @@ function writeError (res, errorCode, details) {
   res.end()
 }
 
-function writeSuccess (res, result) {
+function writeSuccess(res, result) {
   res.writeHead(200, headers)
   res.write(JSON.stringify({
     message: 'success',
@@ -62,100 +62,98 @@ process.on('uncaughtException', error => {
 
 module.exports = (req, res) => {
   if (req.method === 'POST' && req.url === '/file') {
-    if (isNaN(parseInt(req.headers['content-length'])) || parseInt(req.headers['content-length']) > maxImageSize) {
-      writeError(res, 501)
-    } else {
-      let form = new formidable.IncomingForm()
-      form.multiples = false
-      form.type = 'multipart'
-      // form.uploadDir = './tmp'
-      form.keepExtensions = true
+    let body = ''
+    req.on('data', (chunk) => {
+      body += chunk
+    })
+    req.on('end', () => {
+      try {
+        let jsonBody = JSON.parse(body);
+        if (!jsonBody.file || !jsonBody.useruuid) {
+          return writeError(res, 506)
+        }
+        let file = jsonBody.file
+        let useruuid = jsonBody.useruuid
 
-      form.parse(req, function (err, fields, files) {
-        if (err) {
-          writeError(res, 505, err)
-        } else {
-          if (!files.fileInput || !fields.useruuid) {
-            return writeError(res, 506)
-          }
-          utils.validateMimeType(files.fileInput.path, (err, success) => {
-            let useruuid = fields.useruuid
-            let newPath = utils.renameFile(files.fileInput.path, files.fileInput.name)
-            if (err) {
-              writeError(res, 504, err)
-            } else {
-              storageService.uploadImage(useruuid, newPath, (err, result) => {
-                const imageName = files.fileInput.name
-
-                if (err) {
-                  writeError(res, 603, err)
-                } else {
-                  if (!result) {
-                    return writeError(res, 605)
-                  }
-                  const imageSrc = result.imageUrl
-                  visionService(apiKey, imageSrc, (err, tags) => {
-                    if (err) {
-                      writeError(res, 601, err)
-                    } else {
-                      if (tags.length !== 0) {
-                        translationService(apiKey, tags, translateTo, (err, translatedTags) => {
-                          if (err) {
-                            writeError(res, 602, err)
+        utils.validateMimeType(file.path, (err, success) => {
+          let newPath = utils.renameFile(file.path, file.name)
+          if (err) {
+            writeError(res, 504, err)
+          } else {
+            storageService.uploadImage(useruuid, newPath, (err, result) => {
+              const imageName = file.name
+              if (err) {
+                writeError(res, 603, err)
+              } else {
+                if (!result) {
+                  return writeError(res, 605)
+                }
+                const imageSrc = result.imageUrl
+                visionService(apiKey, imageSrc, (err, tags) => {
+                  if (err) {
+                    writeError(res, 601, err)
+                  } else {
+                    if (tags.length !== 0) {
+                      translationService(apiKey, tags, translateTo, (err, translatedTags) => {
+                        if (err) {
+                          writeError(res, 602, err)
+                        } else {
+                          tags = translatedTags;
+                        }
+                        const image = {
+                          src: imageSrc,
+                          name: imageName,
+                          tags: tags
+                        }
+                        cassandraServiceClient.makeRequest('insert', useruuid, image, (dbErr, result) => {
+                          if (dbErr) {
+                            logger.error(dbErr)
+                            storageService.deleteImage(useruuid, imageName, (err, deleted) => {
+                              if (err) {
+                                writeError(res, 603, err)
+                              } else {
+                                writeError(res, 701, dbErr)
+                              }
+                            })
                           } else {
-                            tags = translatedTags;
-                          }
-                          const image = {
-                            src: imageSrc,
-                            name: imageName,
-                            tags: tags
-                          }
-                          cassandraServiceClient.makeRequest('insert', useruuid, image, (dbErr, result) => {
-                            if (dbErr) {
-                              logger.error(dbErr)
+                            if (result.errorMessage) {
                               storageService.deleteImage(useruuid, imageName, (err, deleted) => {
                                 if (err) {
-                                  writeError(res, 603, err)
+                                  logger.error(err)
                                 } else {
-                                  writeError(res, 701, dbErr)
+                                  writeError(res, 701, result.errorMessage)
                                 }
                               })
                             } else {
-                              if (result.errorMessage) {
-                                storageService.deleteImage(useruuid, imageName, (err, deleted) => {
-                                  if (err) {
-                                    logger.error(err)
-                                  } else {
-                                    writeError(res, 701, result.errorMessage)
-                                  }
-                                })
-                              } else {
-                                writeSuccess(res)
-                              }
+                              writeSuccess(res)
                             }
-                            fs.unlinkSync(newPath)
-                          })
-                        })
-                      } else {
-                                                // If no tags from detection there is no point in keeping the image
-                        storageService.deleteImage(useruuid, imageName, (err, deleted) => {
-                          if (err) {
-                            writeError(res, 603, err)
-                          } else {
-                            writeError(res, 604)
                           }
                           fs.unlinkSync(newPath)
                         })
-                      }
+                      })
+                    } else {
+                      // If no tags from detection there is no point in keeping the image
+                      storageService.deleteImage(useruuid, imageName, (err, deleted) => {
+                        if (err) {
+                          writeError(res, 603, err)
+                        } else {
+                          writeError(res, 604)
+                        }
+                        fs.unlinkSync(newPath)
+                      })
                     }
-                  })
-                }
-              })
-            }
-          })
-        }
-      })
-    }
+                  }
+                })
+              }
+            })
+          }
+        })
+      } catch (e) {
+        writeError(res, 500, e)
+      }
+    })
+
+
   } else if (req.method === 'DELETE' && req.url === '/file') {
     let body = ''
     req.on('data', (chunk) => {
@@ -168,19 +166,20 @@ module.exports = (req, res) => {
           imageuuid: jsonBody.image.imageuuid,
           imageName: jsonBody.image.imageName
         }
-        storageService.deleteImage(jsonBody.useruuid, jsonBody.image.imageName, (err, deleted) => {
+        cassandraServiceClient.makeRequest('delete', jsonBody.useruuid, image, (err, deleted) => {
           if (err) {
-            writeError(res, 603, err)
+            writeError(res, 702, err)
           } else {
-            cassandraServiceClient.makeRequest('delete', jsonBody.useruuid, image, (err, deleted) => {
+            storageService.deleteImage(jsonBody.useruuid, image.imageName, (err, deleted) => {
               if (err) {
-                writeError(res, 702, err)
+                writeError(res, 603, err)
               } else {
                 writeSuccess(res)
               }
             })
           }
         })
+       
       } catch (e) {
         writeError(res, 500, e)
       }

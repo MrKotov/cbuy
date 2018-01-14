@@ -18,13 +18,5 @@ export class FetchOlxOffersService {
         .set('page', page);
         return this.httpClient
         .get(url, { params: params })
-    //     .map((res: Response) => {
-    //         console.log(res.json())
-    //         res.json()
-    //     })
-    //     .catch((err: HttpErrorResponse) => {
-    //         console.log(err)
-    //         throw Observable.throw(err)
-    //         });
     }
 }

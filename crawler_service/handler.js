@@ -9,7 +9,8 @@ let queryData = ''
 module.exports = (req, res) => {
   if (req.method === 'GET' && req.url.startsWith('/olx')) {
     queryData = url.parse(req.url, true).query
-    let olxQuery = olxCrawler.olxQueryComposer(queryData.tags.replace(',', ' '), queryData.nextPageToken)
+    queryData.tags = decodeURIComponent(queryData.tags)
+    let olxQuery = olxCrawler.olxQueryComposer(queryData.tags.split(',').join(' '), true, true, null, queryData.nextPageToken)
     olxCrawler.getOlxOffers(olxQuery, (err, result) => {
       if (err) {
         res.writeHead(500, headers)

@@ -18,7 +18,7 @@ function validateMimeType (file, callback) {
 }
 
 function getImageNameFromPath (path) {
-  if (!path) {
+  if (path !== "") {
     let pathTokens = path.split('/')
     return pathTokens[pathTokens.length - 1]
   } else {
@@ -34,5 +34,5 @@ function renameFile (path, name) {
     newPath += '/' + token
   }
   fs.renameSync(path, newPath)
-  return newPath
+  return newPath.substr(1)
 }

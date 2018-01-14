@@ -6,7 +6,7 @@ const cheerio = require('cheerio')
 
 module.exports = {
 
-  olxQueryComposer: function (searchQuery, nextPageToken, searchInDescription, searchWithPhotosOnly, searchWithCourierOnly) {
+  olxQueryComposer: function (searchQuery, searchInDescription, searchWithPhotosOnly, searchWithCourierOnly, nextPageToken) {
     if (!searchQuery) {
       return undefined
     }
@@ -14,9 +14,7 @@ module.exports = {
     let queryString = 'q-'
     let encodedSearchQuery = encodeURIComponent(searchQuery.replace(' ', '-')) + '/?'
     queryString += encodedSearchQuery
-    if (nextPageToken) {
-      queryString += '&page=' + nextPageToken
-    }
+    
     if (searchInDescription) {
       queryString += '&search[description]=1'
     }
@@ -25,6 +23,9 @@ module.exports = {
     }
     if (searchWithCourierOnly) {
       queryString += '&search[courier]=1'
+    }
+    if (nextPageToken) {
+      queryString += 'page=' + nextPageToken
     }
     
     return Object.freeze(queryString)
@@ -106,7 +107,7 @@ function processOlxRequest (htmlContent, callback) {
     if (offerPrevNextPage.length === 2) {
       offerNextPage = offerPrevNextPage[1].attribs.href.split('page=')[1]
     } else {
-      offerNextPage = offerPrevNextPage[0].attribs.href.split('page=')[1]
+      offerNextPage = 1
     }
 
     if (offerImagesAndDescriptionsArray.length !== offerRealUrlsArray.length ||

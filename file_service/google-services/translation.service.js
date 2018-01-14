@@ -57,5 +57,8 @@ function translateArray (apiKey, query, targetLanguage, callback) {
     })
   })
   postRequest.write(JSON.stringify(requestBody))
+  postRequest.on('error', (error) => {
+    callback(err)
+  })
   postRequest.end()
 }

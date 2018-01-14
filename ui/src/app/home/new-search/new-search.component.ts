@@ -20,8 +20,8 @@ export class NewSearchComponent {
     tags = '';
     id = '';
 
-    private fetchOffersUrl = 'http://localhost:8081/olx'
-    private fetchSavedSearchesUrl = 'http://localhost:1111/savedsearches'
+    private fetchOffersUrl = '/olx/bg'
+    private fetchSavedSearchesUrl = '/savedsearches'
 
     private savedSearches = [];
 
@@ -88,6 +88,7 @@ export class NewSearchComponent {
                         console.log('Failed to fetch saved searches!');
                         this.fetchOlxOffersService.fetchOlxData(this.fetchOffersUrl, this.tags, '1').subscribe(
                             (data) => {
+                                console.log(data)
                                 this.fetchedOlxOffers = data.offersArray;
                                 this.fetchedOlxOffers = data.offersArray;
                                 if(this.nextPageOffers === this.lastPageOffers) {
@@ -138,7 +139,6 @@ export class NewSearchComponent {
             if (currentOfferSubarray.length === 0) {
                 this.fetchOlxOffersService.fetchOlxData(this.fetchOffersUrl, this.tags, mpage.toString()).subscribe(
                     (data) => {
-                      
                         this.fetchedOlxOffers = data.offersArray;
                         this.nextPageOffers = data.offerNextPage;
                         this.allOffers[index] = this.fetchedOlxOffers;

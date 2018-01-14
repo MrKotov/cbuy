@@ -63,5 +63,8 @@ function processImage (apiKey, imageUri, callback) {
     })
   })
   postRequest.write(JSON.stringify(requestBody))
+  postRequest.on('error',(error) => {
+    callback(error)
+  })
   postRequest.end()
 }

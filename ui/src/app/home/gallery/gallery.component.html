@@ -21,7 +21,7 @@
                     <p>
                         <a (click)='goToNewSearch(pictureObject)' [routerLink]="['../newsearch']" class="label label-success">Search</a>
                         <a (click)='goToSavedSearches(pictureObject)' [routerLink]="['../savedsearches']" class="label label-primary">Saved Searches</a>
-                        <a href="" class="label label-danger">Delete</a>
+                        <a (click)='deletePicture(pictureObject)' class="label label-danger">Delete</a>
                     </p>
                 </div>
                 <img src="{{pictureObject.src}}" alt="...">

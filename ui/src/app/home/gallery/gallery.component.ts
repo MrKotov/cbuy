@@ -12,6 +12,7 @@ import { PictureObjectPassingService } from "../../services/picture-object-passi
 })
 export class GalleryComponent implements OnInit {
 
+    private imagesUrl = '/gallery/images'
     uploadForm: FormGroup;
     userPicturesArray: any = [];
     pictureObject;
@@ -55,13 +56,12 @@ export class GalleryComponent implements OnInit {
         const formModel = this.prepareSave();
         this.httpClient.post('/gallery/fileupload', formModel, {
         }).subscribe(
-            data => {
-                console.log(data)
-                this.clearFile()
+            (data: any) => {
+                this.loadFromServer();
+                this.clearFile();
             },
-            err => {
-                console.log(err)
-                this.clearFile()
+            (error) => {
+                this.clearFile();
             })
     }
 
@@ -72,16 +72,41 @@ export class GalleryComponent implements OnInit {
 
     loadFromServer() {
         if (this.userPicturesArray.length === 0) {
-            this.httpClient.get('http://localhost:8080/gallery/images', {
+            let params = { useruuid: '0d6ceea0-f39c-11e7-b16f-6d2c86545d91' }
+            this.httpClient.get(this.imagesUrl, {
+                params: params
             }).subscribe(
-                (data) => {
-                    this.userPicturesArray = data;
+                (data: any) => {
+                    if (data.error) {
+                    } else {
+                        this.userPicturesArray = data.imagesArray;
+                    }
                 },
-                err => {
-                    console.log(err)
+                (error) => {
+                    console.log('get error: ' + error)
                 })
         }
     }
+
+    deletePicture(pictureObject) {
+        let params = {
+            uuid: pictureObject.id,
+            useruuid: 'someid',
+            imageName: pictureObject.name
+        }
+        this.httpClient.post(this.imagesUrl, {
+            params: params
+        }).subscribe(
+            (data) => {
+                this.userPicturesArray = this.userPicturesArray.filter((image) => {
+                    return image !== pictureObject;
+                })
+            },
+            (error) => {
+                console.log(error)
+            })
+    }
+
 
     goToNewSearch(pictureObject) {
         this.PictureObjectPassingService.setPictureObject(pictureObject);

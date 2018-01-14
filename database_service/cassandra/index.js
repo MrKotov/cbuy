@@ -27,6 +27,7 @@ module.exports = {
   deleteUser: (useruuid, callback) => deleteUser(useruuid, callback),
   insertImage: (useruuid, image, callback) => insertImage(useruuid, image, callback),
   getImages: (useruuid, callback) => getImages(useruuid, callback),
+  getImageById: (useruuid, imageuuid, callback) => getImageById(useruuid, imageuuid,callback),
   deleteImage: (useruuid, imageuuid, callback) => deleteImage(useruuid, imageuuid, callback),
   insertSavedSearchItem: (imageuuid, olxOffer, callback) => insertSearchItem(imageuuid, olxOffer, callback),
   getSavedSearchItems: (imageuuid, callback) => getSavedSearchItems(imageuuid, callback),
@@ -61,7 +62,7 @@ function getUser (email, password, callback) {
   if (!userClient) {
     return callback(errorMessages['502'])
   }
-  const query = 'SELECT id, email, password, firstname, lastname FROM app_users WHERE email = ? allow filtering;'
+  const query = 'SELECT id, email, password, firstname, lastname FROM app_users WHERE email = ? ALLOW FILTERING;'
   const params = [email]
   userClient.execute(query, params, { prepare: true }, (err, res) => {
     if (err) {
@@ -122,7 +123,7 @@ function insertImage (useruuid, image, callback) {
   }
   const query = 'INSERT INTO images(id, useruuid, name, src, tags) VALUES(?, ?, ?, ?, ?);'
 
-  contentClient.execute(query, [uuid.random(), useruuid, image.src, image.name, image.tags], { prepare: true }, (err, res) => {
+  contentClient.execute(query, [uuid.random(), useruuid, image.name, image.src, image.tags], { prepare: true }, (err, res) => {
     if (err) {
       callback(err)
     } else {
@@ -137,16 +138,37 @@ function getImages (useruuid, callback) {
   } else if (!useruuid) {
     return callback(errorMessages['503'])
   }
-  const query = 'SELECT id, src, tags FROM images WHERE useruuid = ?;'
+  const query = 'SELECT id, src, name, tags FROM images WHERE useruuid = ?;'
   contentClient.execute(query, [useruuid], { prepare: true }, (err, res) => {
     if (err) {
       callback(err)
     } else {
       const imagesArray = []
       for (let row of res.rows) {
-        imagesArray.push({ id: row.id, src: row.src, tags: row.tags })
+        imagesArray.push({ id: row.id, src: row.src, name: row.name, tags: row.tags })
       }
       callback(null, imagesArray)
+    }
+  })
+}
+
+function getImageById (useruuid, imageuuid, callback) {
+  if (!contentClient) {
+    return callback(errorMessages['502'])
+  } else if (!useruuid) {
+    return callback(errorMessages['503'])
+  }
+  const query = 'SELECT id, src, name, tags FROM images WHERE useruuid = ? AND ID = ? ALLOW FILTERING;'
+  contentClient.execute(query, [useruuid, imageuuid], { prepare: true }, (err, res) => {
+    if (err) {
+      callback(err)
+    } else {
+      const image = { 
+        id: res.rows[0].id, 
+        src: res.rows[0].src, 
+        name: res.rows[0].name, 
+        tags: res.rows[0].tags }
+      callback(null, image)
     }
   })
 }

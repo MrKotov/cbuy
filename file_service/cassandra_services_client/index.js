@@ -62,9 +62,11 @@ function makeRequest (operation, useruuid, image, callback) {
       callback(err)
     })
   })
-  request.on('error', (err) => {
-    callback(err)
+
+  request.on('error', (error) => {
+    callback(error)
   })
+
   request.write(JSON.stringify(requestBody))
   request.end()
 }
