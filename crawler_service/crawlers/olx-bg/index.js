@@ -14,7 +14,7 @@ module.exports = {
     let queryString = 'q-'
     let encodedSearchQuery = encodeURIComponent(searchQuery.replace(' ', '-')) + '/?'
     queryString += encodedSearchQuery
-    
+
     if (searchInDescription) {
       queryString += '&search[description]=1'
     }
@@ -25,9 +25,9 @@ module.exports = {
       queryString += '&search[courier]=1'
     }
     if (nextPageToken) {
-      queryString += 'page=' + nextPageToken
+      queryString += '&page=' + nextPageToken
     }
-    
+
     return Object.freeze(queryString)
   },
 
@@ -97,33 +97,30 @@ function processOlxRequest (htmlContent, callback) {
       lowerCaseTags: false
     })
     const offersArray = []
-    const offerImagesAndDescriptionsArray = $('a.thumb')
-    const offerRealUrlsArray = $('a.marginright5')
-    const offerPricesArray = $('p.price')
+    const offers = $('.offer').toArray()
+    for (let offer of offers) {
+      if (offer.children[1].children.length === 0 || offer.children[1].childNodes[1].children[1].childNodes[5].children[1].children.length === 1) {
+
+      } else if (offer.children[1].childNodes[1].children[1].childNodes[5].children[1].children[1].children[1].children[0].data) {
+        let base = offer.children[1].childNodes[1].children[1].children[1].children[1]
+        let href = base.attribs.href
+        let image = base.children[1].attribs.src
+        let alt = base.children[1].attribs.alt
+        let price = offer.children[1].childNodes[1].children[1].childNodes[5].children[1].children[1].children[1].children[0].data
+        offersArray.push(
+          new Offer(image, alt, href, price)
+        )
+      }
+    }
+
     const offerPrevNextPage = $('a.pageNextPrev')
     const offersDisplayedPages = $('a.block.br3.brc8.large.tdnone.lheight24')
     const offersLastPage = offersDisplayedPages.length === 0 ? 1 : offersDisplayedPages[offersDisplayedPages.length - 1].children[1].children[0].data || 0
     let offerNextPage = ''
-    if (offerPrevNextPage.length === 2) {
+    if (offerPrevNextPage.length === 1) {
+      offerNextPage = offerPrevNextPage[0].attribs.href.split('page=')[1]
+    } else if (offerPrevNextPage.length === 2) {
       offerNextPage = offerPrevNextPage[1].attribs.href.split('page=')[1]
-    } else {
-      offerNextPage = 1
-    }
-
-    if (offerImagesAndDescriptionsArray.length !== offerRealUrlsArray.length ||
-            offerImagesAndDescriptionsArray.length !== offerPricesArray.length) {
-      let err = 'Mismatch amongst array lenghts.'
-      return callback(err, null)
-    }
-
-    for (let i = 0; i < offerImagesAndDescriptionsArray.length; i++) {
-      offersArray.push(
-                new Offer(
-                    offerImagesAndDescriptionsArray[i].children[1].attribs.src,
-                    offerImagesAndDescriptionsArray[i].children[1].attribs.alt,
-                    offerRealUrlsArray[i].attribs.href,
-                    offerPricesArray[i].children[1].children[0].data)
-            )
     }
     return callback(null, { offersArray, offerNextPage, offersLastPage })
   } catch (e) {
